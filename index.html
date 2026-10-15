@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz histórico: Mayo Francés de 1968</title>
+<style>
+    :root {
+        --papel: #f4f1ea;
+        --papel-claro: #fbf8f1;
+        --tinta: #1c1c28;
+        --azul: #0055A4;      /* azul Francia */
+        --rojo: #b92a20;      /* rojo de afiche, con contraste suficiente para texto */
+        --terracota: #a23b2a;
+        --verde: #1f6b3a;
+        --verde-claro: #e3f2e6;
+        --error-claro: #f9e4de;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: Verdana, Geneva, Arial, sans-serif;
+        color: var(--tinta);
+        line-height: 1.75;
+        letter-spacing: 0.3px;
+        margin: 0;
+        padding: 28px 16px 48px;
+        background-color: var(--papel);
+        /* trama de serigrafía muy sutil, sin cansar la vista */
+        background-image: radial-gradient(rgba(28, 28, 40, 0.07) 1px, transparent 1.2px);
+        background-size: 14px 14px;
+    }
+
+    #contenedor-quiz {
+        max-width: 760px;
+        margin: 0 auto;
+    }
+
+    /* ---------- Tarjeta base: estilo afiche impreso ---------- */
+    .card {
+        display: none;
+        border: 3px solid var(--tinta);
+        border-radius: 6px;
+        background: var(--papel-claro);
+        box-shadow: 9px 9px 0 var(--tinta);
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    .card.active { display: block; }
+
+    .franja-tricolor {
+        height: 14px;
+        background: linear-gradient(90deg, var(--azul) 0 33.33%, #ffffff 33.33% 66.66%, #e03a2f 66.66% 100%);
+        border-bottom: 3px solid var(--tinta);
+    }
+
+    /* ---------- Portada ---------- */
+    #portada { background: var(--azul); color: #fff; }
+    #portada .cuerpo { padding: 40px 34px 44px; }
+    #portada h1 {
+        font-size: clamp(1.9rem, 6vw, 2.8rem);
+        line-height: 1.2;
+        margin: 0 0 16px;
+        font-weight: 800;
+    }
+    #portada .consigna {
+        display: inline-block;
+        background: var(--papel);
+        color: var(--tinta);
+        border: 3px solid var(--tinta);
+        padding: 8px 16px;
+        font-weight: bold;
+        font-size: 1.05rem;
+        transform: rotate(-1.5deg);
+        margin: 4px 0 22px;
+        box-shadow: 5px 5px 0 var(--tinta);
+    }
+    #portada p { font-size: 1.12rem; margin: 0 0 28px; max-width: 520px; }
+
+    /* ---------- Botones de acción ---------- */
+    .btn-accion, .btn-siguiente {
+        font-family: inherit;
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: #fff;
+        background: var(--rojo);
+        border: 3px solid var(--tinta);
+        border-radius: 6px;
+        padding: 14px 28px;
+        cursor: pointer;
+        box-shadow: 5px 5px 0 var(--tinta);
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .btn-accion:hover, .btn-siguiente:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 7px 7px 0 var(--tinta);
+    }
+    .btn-accion:active, .btn-siguiente:active {
+        transform: translate(3px, 3px);
+        box-shadow: 2px 2px 0 var(--tinta);
+    }
+
+    /* ---------- Tarjetas de pregunta ---------- */
+    .encabezado {
+        padding: 22px 30px 26px;
+        color: #fff;
+    }
+    .pregunta.c0 .encabezado { background: var(--azul); }
+    .pregunta.c1 .encabezado { background: var(--rojo); }
+    .pregunta.c2 .encabezado { background: var(--tinta); }
+
+    .progreso-texto {
+        font-size: 0.95rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .segmentos {
+        display: grid;
+        gap: 4px;
+        margin-bottom: 20px;
+    }
+    .segmento {
+        height: 10px;
+        border: 2px solid #fff;
+        border-radius: 2px;
+        background: transparent;
+    }
+    .segmento.hecho { background: #fff; }
+    .segmento.actual { background: rgba(255, 255, 255, 0.45); }
+
+    h2 {
+        font-size: 1.35rem;
+        line-height: 1.5;
+        margin: 0;
+        font-weight: 800;
+        outline: none;
+    }
+
+    .cuerpo-pregunta { padding: 26px 30px 30px; }
+
+    /* ---------- Opciones ---------- */
+    button.opcion {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        width: 100%;
+        margin: 0 0 14px;
+        padding: 14px 16px;
+        font-family: inherit;
+        font-size: 1.04rem;
+        line-height: 1.6;
+        text-align: left;
+        color: var(--tinta);
+        background: #fff;
+        border: 3px solid var(--tinta);
+        border-radius: 6px;
+        cursor: pointer;
+        box-shadow: 4px 4px 0 var(--tinta);
+        transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+    }
+    button.opcion .letra {
+        flex: 0 0 auto;
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #fff;
+        background: var(--azul);
+        border-radius: 50%;
+        border: 2px solid var(--tinta);
+        line-height: 1;
+    }
+    button.opcion:hover:not(:disabled) {
+        background: #e8f0fa;
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0 var(--azul);
+        border-color: var(--azul);
+    }
+    button.opcion.equivocada {
+        background: var(--error-claro);
+        border-color: var(--terracota);
+        box-shadow: 4px 4px 0 var(--terracota);
+    }
+    button.opcion.equivocada .letra { background: var(--terracota); }
+    button.opcion.acertada {
+        background: var(--verde-claro);
+        border-color: var(--verde);
+        box-shadow: 4px 4px 0 var(--verde);
+    }
+    button.opcion.acertada .letra { background: var(--verde); }
+    button.opcion:disabled { cursor: default; }
+    button.opcion:disabled:not(.acertada):not(.equivocada) { opacity: 0.6; }
+
+    /* ---------- Retroalimentación ---------- */
+    .feedback {
+        display: none;
+        margin-top: 22px;
+        padding: 18px 20px;
+        border: 3px solid;
+        border-radius: 6px;
+        font-size: 1.04rem;
+    }
+    .feedback .titulo { display: block; font-weight: 800; font-size: 1.12rem; margin-bottom: 6px; }
+    .feedback.success { background: var(--verde-claro); border-color: var(--verde); color: #123d22; }
+    .feedback.error   { background: var(--error-claro); border-color: var(--terracota); color: #5e2116; }
+    .feedback .btn-siguiente { margin-top: 16px; background: var(--verde); }
+
+    /* ---------- Pantalla final: placa de cierre ---------- */
+    #pantalla-final { background: var(--tinta); color: #f4f1ea; }
+    #pantalla-final .cuerpo { padding: 38px 34px 40px; }
+    #pantalla-final .sello {
+        display: inline-block;
+        font-weight: bold;
+        font-size: 0.95rem;
+        color: var(--tinta);
+        background: #f4f1ea;
+        border: 3px solid #f4f1ea;
+        padding: 4px 14px;
+        margin-bottom: 18px;
+        transform: rotate(-1.5deg);
+    }
+    #pantalla-final h1 {
+        font-size: clamp(1.6rem, 5vw, 2.2rem);
+        line-height: 1.3;
+        margin: 0 0 22px;
+        font-weight: 800;
+        outline: none;
+    }
+    .caja-reflexion {
+        background: rgba(255, 255, 255, 0.07);
+        border-left: 8px solid var(--azul);
+        border-right: 8px solid #e03a2f;
+        padding: 22px 24px;
+        margin-bottom: 28px;
+        font-size: 1.08rem;
+        line-height: 1.85;
+    }
+    #pantalla-final .btn-accion { background: var(--azul); border-color: #f4f1ea; box-shadow: 5px 5px 0 #f4f1ea; }
+    #pantalla-final .btn-accion:hover { box-shadow: 7px 7px 0 #f4f1ea; }
+    #pantalla-final .btn-accion:active { box-shadow: 2px 2px 0 #f4f1ea; }
+
+    /* ---------- Accesibilidad ---------- */
+    :focus-visible { outline: 4px solid #ffb703; outline-offset: 3px; }
+
+    @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; }
+    }
+
+    @media (max-width: 520px) {
+        body { padding: 16px 10px 36px; }
+        .encabezado, .cuerpo-pregunta { padding-left: 18px; padding-right: 18px; }
+        #portada .cuerpo, #pantalla-final .cuerpo { padding: 28px 20px 32px; }
+        .card { box-shadow: 6px 6px 0 var(--tinta); }
+    }
+</style>
+</head>
+<body>
+
+<div id="contenedor-quiz"></div>
+
+<script>
+    const preguntas = [
+        {
+            pregunta: "¿En qué año y lugar ocurrió el Mayo Francés?",
+            opciones: [
+                "En Argentina, año 1973.",
+                "En París, Francia, en el año 1968.",
+                "En Córdoba, año 1969."
+            ],
+            correcta: 1,
+            fundamentacion: "El conflicto estalló en mayo de 1968 en el ámbito universitario parisino y se extendió a todo el país europeo."
+        },
+        {
+            pregunta: "¿Quiénes fueron los dos grandes protagonistas sociales que impulsaron el Mayo Francés?",
+            opciones: [
+                "Los estudiantes universitarios y los sindicatos obreros.",
+                "Los partidos políticos de derecha y el ejército.",
+                "Los empresarios industriales y los banqueros."
+            ],
+            correcta: 0,
+            fundamentacion: "La alianza inédita entre jóvenes y trabajadores puso en jaque al gobierno y paralizó el país."
+        },
+        {
+            pregunta: "¿Cuál fue el origen de las protestas estudiantiles en la Universidad de Nanterre?",
+            opciones: [
+                "Una huelga general de profesores de literatura por recortes salariales.",
+                "Una protesta por el aumento en el precio del transporte público urbano.",
+                "El rechazo al autoritarismo académico y las normas morales conservadoras."
+            ],
+            correcta: 2,
+            fundamentacion: "Los estudiantes cuestionaban la rigidez educativa y las normas arcaicas de convivencia dentro de las residencias universitarias."
+        },
+        {
+            pregunta: "¿Cómo reaccionó el gobierno de Charles de Gaulle ante las primeras protestas estudiantiles?",
+            opciones: [
+                "Respondió con fuerte represión policial y el cierre de universidades.",
+                "Otorgó de inmediato todas las demandas universitarias sin resistencia.",
+                "El presidente renunció a su cargo el primer día del conflicto."
+            ],
+            correcta: 0,
+            fundamentacion: "La violencia institucional generó el efecto contrario: indignó a la sociedad y multiplicó masivamente las protestas en las calles."
+        },
+        {
+            pregunta: "¿Qué reclamaban los trabajadores y obreros al sumarse masivamente a las protestas?",
+            opciones: [
+                "Reclamaban la privatización total de las fábricas estatales y el recorte de convenios.",
+                "Exigían aumentos salariales, mejores condiciones laborales y el fin de políticas restrictivas.",
+                "Pedían la reducción de horas de descanso obligatorias para trabajar doble turno."
+            ],
+            correcta: 1,
+            fundamentacion: "Los obreros aprovecharon la movilización para canalizar su propio descontento contra el capitalismo industrial y el costo de vida."
+        },
+        {
+            pregunta: "¿Qué criticaba ideológicamente el movimiento más allá de la economía?",
+            opciones: [
+                "La creación de un nuevo imperio colonial en África y Asia.",
+                "El retorno estricto a las leyes feudales del medioevo europeo.",
+                "El capitalismo de consumo, el orden burgués y el autoritarismo tradicional."
+            ],
+            correcta: 2,
+            fundamentacion: "Con frases como «La imaginación al poder», buscaron transformar las costumbres, la cultura y las libertades individuales."
+        },
+        {
+            pregunta: "¿Qué lugar histórico adquirió la juventud tras estos acontecimientos?",
+            opciones: [
+                "Se consolidó como un actor político autónomo, crítico y con voz propia.",
+                "Pasó a ser un sector social sin voz ni participación política institucional.",
+                "Perdió el derecho a ingresar a la educación superior en todo el continente."
+            ],
+            correcta: 0,
+            fundamentacion: "A partir de 1968, los jóvenes dejaron de ser vistos solo como estudiantes pasivos para convertirse en agentes de cambio cultural."
+        },
+        {
+            pregunta: "¿Cómo logró el gobierno desactivar la crisis?",
+            opciones: [
+                "Fue derrocado por un golpe de estado militar soviético.",
+                "Mediante los Acuerdos de Grenelle (aumentos salariales) y elecciones legislativas.",
+                "El presidente De Gaulle huyó del país y el Estado colapsó definitivamente."
+            ],
+            correcta: 1,
+            fundamentacion: "Al disuadir a los obreros con mejoras económicas y convocar a elecciones, el régimen recuperó el control institucional."
+        },
+        {
+            pregunta: "¿Qué impacto a largo plazo dejó el Mayo Francés en las sociedades occidentales?",
+            opciones: [
+                "La prohibición absoluta de los centros de estudiantes y huelgas sindicales.",
+                "La eliminación de los derechos civiles y las libertades de expresión.",
+                "Una transformación profunda en los roles de género, la educación y las libertades civiles."
+            ],
+            correcta: 2,
+            fundamentacion: "Abrió el camino para el posterior desarrollo del feminismo moderno, el ecologismo y los movimientos por los derechos civiles."
+        },
+        {
+            pregunta: "¿Qué expresa en profundidad el Mayo Francés como fenómeno histórico?",
+            opciones: [
+                "Expresa la fisura del mito del orden capitalista feliz y unidimensional, mostrando que el progreso sin libertad genera rechazo.",
+                "Expresa un simple desacuerdo técnico sobre la administración presupuestaria de bibliotecas.",
+                "Expresa el deseo generalizado de volver a formas de producción agrarias tradicionales."
+            ],
+            correcta: 0,
+            fundamentacion: "El Mayo Francés desnudó que las sociedades industriales desarrolladas sufrían una profunda alienación bajo las estructuras autoritarias."
+        },
+        {
+            pregunta: "¿Qué representa el Mayo Francés y qué huellas dejó en la actualidad?",
+            opciones: [
+                "Representa el fin definitivo de todas las protestas sociales en el mundo moderno.",
+                "Representa la restauración de las monarquías absolutistas en Europa occidental.",
+                "Representa la rebeldía juvenil y dejó la huella de cuestionar el autoritarismo, defender la diversidad y exigir participación."
+            ],
+            correcta: 2,
+            fundamentacion: "Hoy en día, la idea de que la juventud tiene derecho a opinar y transformar las instituciones proviene directamente de aquel mayo de 1968."
+        }
+    ];
+
+    const LETRAS = ["A", "B", "C", "D"];
+
+    function inicializarQuiz() {
+        const contenedor = document.getElementById("contenedor-quiz");
+        contenedor.innerHTML = "";
+
+        // Portada
+        const portada = document.createElement("div");
+        portada.id = "portada";
+        portada.className = "card active";
+        portada.innerHTML = `
+            <div class="franja-tricolor"></div>
+            <div class="cuerpo">
+                <h1>El Mayo Francés de 1968</h1>
+                <div class="consigna">«La imaginación al poder»</div>
+                <p>Quiz de Historia de 5.° año sobre juventudes, trabajadores y procesos sociales.</p>
+                <button class="btn-accion" onclick="comenzarQuiz()">Iniciar recorrido</button>
+            </div>
+        `;
+        contenedor.appendChild(portada);
+
+        // Preguntas
+        preguntas.forEach((item, index) => {
+            const card = document.createElement("div");
+            card.className = `card pregunta c${index % 3}`;
+            card.id = `pregunta-${index}`;
+
+            let segmentos = "";
+            for (let s = 0; s < preguntas.length; s++) {
+                const estado = s < index ? "hecho" : (s === index ? "actual" : "");
+                segmentos += `<div class="segmento ${estado}"></div>`;
+            }
+
+            let opcionesHtml = "";
+            item.opciones.forEach((opcion, i) => {
+                opcionesHtml += `
+                    <button class="opcion" onclick="verificarRespuesta(${index}, ${i})">
+                        <span class="letra" aria-hidden="true">${LETRAS[i]}</span>
+                        <span>${opcion}</span>
+                    </button>`;
+            });
+
+            card.innerHTML = `
+                <div class="franja-tricolor"></div>
+                <div class="encabezado">
+                    <div class="progreso-texto">Pregunta ${index + 1} de ${preguntas.length}</div>
+                    <div class="segmentos" style="grid-template-columns: repeat(${preguntas.length}, 1fr);" aria-hidden="true">${segmentos}</div>
+                    <h2 tabindex="-1">${item.pregunta}</h2>
+                </div>
+                <div class="cuerpo-pregunta">
+                    ${opcionesHtml}
+                    <div id="feedback-${index}" class="feedback" role="status" aria-live="polite"></div>
+                </div>
+            `;
+            contenedor.appendChild(card);
+        });
+
+        // Pantalla final
+        const pantallaFinal = document.createElement("div");
+        pantallaFinal.id = "pantalla-final";
+        pantallaFinal.className = "card";
+        pantallaFinal.innerHTML = `
+            <div class="franja-tricolor"></div>
+            <div class="cuerpo">
+                <span class="sello">Recorrido completado</span>
+                <h1 tabindex="-1">Reflexión final: el eco del pasado en nuestro presente</h1>
+                <div class="caja-reflexion">
+                    La gesta de mayo de 1968 demostró que cuando los jóvenes, los trabajadores y los sectores postergados se organizan y alzan la voz con conciencia colectiva, logran transformar la realidad y conquistar derechos. En nuestra historia argentina, esta huella se revitaliza constantemente en cada lucha social y juvenil: el reclamo colectivo no es solo un grito de protesta, sino la herramienta fundamental para construir una sociedad más justa, visibilizar a quienes están en desventaja de poder y conquistar mejoras sociales duraderas.
+                </div>
+                <button class="btn-accion" onclick="reiniciarQuiz()">Volver a empezar el recorrido</button>
+            </div>
+        `;
+        contenedor.appendChild(pantallaFinal);
+    }
+
+    function mostrarTarjeta(id) {
+        document.querySelectorAll(".card.active").forEach(c => c.classList.remove("active"));
+        const tarjeta = document.getElementById(id);
+        tarjeta.classList.add("active");
+        window.scrollTo({ top: 0 });
+        const titulo = tarjeta.querySelector("h2, h1");
+        if (titulo) titulo.focus({ preventScroll: true });
+    }
+
+    function comenzarQuiz() {
+        mostrarTarjeta("pregunta-0");
+    }
+
+    function verificarRespuesta(numPregunta, opcionElegida) {
+        const item = preguntas[numPregunta];
+        const feedbackDiv = document.getElementById(`feedback-${numPregunta}`);
+        const botones = document.querySelectorAll(`#pregunta-${numPregunta} .opcion`);
+
+        if (opcionElegida === item.correcta) {
+            botones.forEach(btn => btn.disabled = true);
+            botones[opcionElegida].classList.remove("equivocada");
+            botones[opcionElegida].classList.add("acertada");
+            feedbackDiv.className = "feedback success";
+            feedbackDiv.innerHTML = `
+                <span class="titulo">✔ ¡Correcto!</span>
+                ${item.fundamentacion}
+                <br>
+                ${numPregunta < preguntas.length - 1
+                    ? `<button class="btn-siguiente" onclick="siguientePregunta(${numPregunta})">Siguiente pregunta ➡</button>`
+                    : `<button class="btn-siguiente" onclick="mostrarPantallaFinal()">Finalizar y ver reflexión final ➡</button>`}
+            `;
+        } else {
+            botones[opcionElegida].classList.add("equivocada");
+            botones[opcionElegida].disabled = true;
+            feedbackDiv.className = "feedback error";
+            feedbackDiv.innerHTML = `
+                <span class="titulo">Todavía no es esa</span>
+                Esta opción no coincide con lo ocurrido. Releé la pregunta, pensá en el proceso histórico y probá con otra.
+            `;
+        }
+        feedbackDiv.style.display = "block";
+    }
+
+    function siguientePregunta(actual) {
+        mostrarTarjeta(`pregunta-${actual + 1}`);
+    }
+
+    function mostrarPantallaFinal() {
+        mostrarTarjeta("pantalla-final");
+    }
+
+    function reiniciarQuiz() {
+        inicializarQuiz();
+        window.scrollTo({ top: 0 });
+    }
+
+    window.onload = inicializarQuiz;
+</script>
+</body>
+</html>
